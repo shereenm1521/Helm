@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+    spec:
+      containers:
+        - name: server
+          image: {{ .Values.container.image }}
+          ports:
+            - containerPort: {{ .Values.container.port }}
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.container.readinessProbe.initialDelaySeconds }}
+            httpGet:
+              path: "{{ .Values.container.readinessProbe.path }}"
+              port: {{ .Values.container.port }}
+              httpHeaders:
+                - name: "Cookie"
+                  value: "{{ .Values.container.readinessProbe.cookie }}"
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.container.livenessProbe.initialDelaySeconds }}
+            httpGet:
+              path: "{{ .Values.container.livenessProbe.path }}"
+              port: {{ .Values.container.port }}
+              httpHeaders:
+                - name: "Cookie"
+                  value: "{{ .Values.container.livenessProbe.cookie }}"
+          env:
+{{- range $env := .Values.container.env }}
+            - name: "{{ $env.name }}"
+              value: "{{ $env.value }}"
+{{- end }}
+          resources:
+            requests:
+              cpu: {{ .Values.container.resources.requests.cpu }}
+              memory: {{ .Values.container.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.container.resources.limits.cpu }}
+              memory: {{ .Values.container.resources.limits.memory }}
